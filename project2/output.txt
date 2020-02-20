@@ -1,0 +1,22 @@
+INPUT: int number ( int n [] , int x ) {
+KW: int
+ID: number
+(
+KW: int
+ID: n
+[
+]
+,
+KW: int
+ID: x
+)
+{
+INPUT:     int b;
+KW: int
+ID: b
+;
+INPUT:     b = x
+ID: b
+=
+ID: x
+INPUT: }}
