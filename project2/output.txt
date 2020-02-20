@@ -1,6 +1,13 @@
-INPUT: int number ( ) {}KW: int
+INPUT: int number ( int n [] , int x ) {}KW: int
 ID: number
 (
+KW: int
+ID: n
+[
+]
+,
+KW: int
+ID: x
 )
 {
 }
