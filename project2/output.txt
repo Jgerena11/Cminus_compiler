@@ -1,0 +1,9 @@
+INPUT: int number (int n) {}
+KW: int
+ID: number
+(
+KW: int
+ID: n
+)
+{
+}
