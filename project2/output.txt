@@ -1,9 +1,6 @@
-INPUT: int number (int n) {}
-KW: int
+INPUT: int number ( ) {}KW: int
 ID: number
 (
-KW: int
-ID: n
 )
 {
 }

@@ -246,6 +246,7 @@ class Parser:
         elif self.tokens[self.count] == '(':
             if self.match(self.tokens[self.count], '('):
                 if self.params():
+                    print('made it here')
                     if self.tokens[self.count] == ')':
                         if self.match(self.tokens[self.count], ')'):
                             if self.compound_stmt():
@@ -262,12 +263,12 @@ class Parser:
 
     def param(self):
         if self.type_specifier():
+            print('type specifier returned true')
             if self.tokens[self.count] == 'ID':
                 if self.match(self.tokens[self.count], 'ID'):
                     if self.param_prime():
                         return True
-        else:
-            return False
+        return False
 
     def param_list_prime(self):
         if self.tokens[self.count] == ',':
@@ -275,24 +276,41 @@ class Parser:
                 if self.param_list():
                     return True
         else:
+            print('param_list_prime returns true')
             return True
 
     def param_list(self):
         if self.param():
+
             if self.param_list_prime():
                 return True
         else:
+            print('param returned false')
             return False
 
     def params(self):
-        if self.param_list():
-            return True
-        elif self.tokens[self.count] == 'void':
+        if self.tokens[self.count] == 'void':
             if self.match(self.tokens[self.count], 'void'):
-                return True
-        else:
-            return False
+                if self.params_prime():
+                    return True
+        elif self.tokens[self.count] == 'int':
+            if self.match(self.tokens[self.count], 'int'):
+                if self.tokens[self.count] == 'ID':
+                    if self.match(self.tokens[self.count], 'ID'):
+                        if self.param_prime():
+                            if self.param_list_prime():
+                                return True
+        return False
 
+    def params_prime(self):
+        if self.tokens[self.count] == 'ID':
+            if self.match(self.tokens[self.count], 'ID'):
+                if self.param_prime():
+                    if self.param_list_prime():
+                        return True
+        else:
+            return True
+        return False
 
 parse = Parser(tokens)
 parse.program()
