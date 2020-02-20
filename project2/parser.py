@@ -201,10 +201,11 @@ class Parser:
 
     def statement_list(self):
         if self.statement():
+            print('statement passed')
             if self.statement_list():
                 return True
         else:
-            return True
+            return False
 
     def local_declarations(self):
         if self.type_specifier():
@@ -220,9 +221,11 @@ class Parser:
     def compound_stmt(self):
         if self.match(self.tokens[self.count], '{'):
             if self.local_declarations():
-                if self.statement_list():
-                    if self.match(self.tokens[self.count], '}'):
+                if self.statement_list() and self.match(self.tokens[self.count], '}'):
+                    return True
+                elif self.match(self.tokens[self.count], '}'):
                         return True
+            return False
         else:
             return False
 
@@ -232,7 +235,6 @@ class Parser:
             return True
         elif self.match(self.tokens[self.count], '('):
             if self.params():
-                print('made it here')
                 if self.match(self.tokens[self.count], ')'):
                     if self.compound_stmt():
                         return True
@@ -246,7 +248,6 @@ class Parser:
 
     def param(self):
         if self.type_specifier():
-            print('type specifier returned true')
             if self.match(self.tokens[self.count], 'ID'):
                 if self.param_prime():
                     return True
@@ -257,7 +258,6 @@ class Parser:
             if self.param_list():
                 return True
         else:
-            print('param_list_prime returns true')
             return True
 
     def param_list(self):
@@ -265,7 +265,6 @@ class Parser:
             if self.param_list_prime():
                 return True
         else:
-            print('param returned false')
             return False
 
     def params(self):
@@ -289,17 +288,23 @@ class Parser:
         return False
 
     def statement(self):
+        print(self.tokens[self.count])
         if self.expression_stmt():
             return True
         elif self.compound_stmt():
+            print('compound stmt returned true')
             return True
         elif self.selection_stmt():
+            print('selection_stmt returned true')
             return True
         elif self.iteration_stmt():
+            print('iteration statement returned true')
             return True
         elif self.return_stmt():
+            print('return')
             return True
         else:
+            print('statement fails')
             return False
 
     def selection_stmt(self):
@@ -348,12 +353,15 @@ class Parser:
             return False
 
     def expression_stmt(self):
+        print('made it to expression stmt')
         if self.expression():
+            print('expression returned true')
             if self.match(self.tokens[self.count], ';'):
                 return True
         elif self.match(self.tokens[self.count], ';'):
             return True
         else:
+            print('expression returned false and no ;')
             return False
 
     def expression(self):
@@ -393,13 +401,21 @@ class Parser:
             return False
 
     def expression_double_prime(self):
+        print('made it expression double prime')
         if self.term_prime():
-            if self.additive_expression():
+            print('term_prime returned true')
+            if self.additive_expression_prime():
+                print('additive expression returned true')
+                print('token here is'+ self.tokens[self.count])
                 if self.simple_expression():
+                    print('simple_expression returned true')
                     return True
-        elif self.match(self.tokens[self.count], '='):
-            if self.expression():
-                return True
+                elif self.match(self.tokens[self.count], '='):
+                    print('made it to the equal sign')
+                    if self.expression():
+                        return True
+        print('expression_double_prime returns false')
+        return False
 
     def simple_expression(self):
         if self.relop():
@@ -431,6 +447,7 @@ class Parser:
             if self.additive_expression_prime():
                 return True
         else:
+            print('term and additive expression failed')
             return False
 
     def additive_expression_prime(self):
@@ -451,10 +468,13 @@ class Parser:
             return False
 
     def term(self):
+        print('made it to term')
         if self.factor():
+            print('factor has passed')
             if self.term_prime():
                 return True
         else:
+            print('factor failed as expected')
             return False
 
     def term_prime(self):
@@ -476,6 +496,7 @@ class Parser:
             return False
 
     def factor(self):
+        print('made it to factor!!!')
         if self.match(self.tokens[self.count], '('):
             if self.expression():
                 if self.match(self.tokens[self.count], ')'):
@@ -488,7 +509,7 @@ class Parser:
         else:
             return False
 
-    def factor(self):
+    def factor_prime(self):
         if self.match(self.tokens[self.count], '['):
             if self.expression():
                 if self.match(self.tokens[self.count], ']'):
