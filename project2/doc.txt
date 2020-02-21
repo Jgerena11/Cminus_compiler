@@ -1,0 +1,11 @@
+Program: Project 2 - Parser
+Course: COP4620 - Constructor of Language Translators
+Name: Jose Gerena
+Instructor: Roger Eggen
+Due Date: 2/20/2020
+Submitted: 2/20/2020
+
+The following program is a recursive descent parser. The program begins by taking in a file and which 
+the scanner begins tokenizing the contents of the file. Afterwards the tokens are passed onto
+the parser where recursive descent is used to parse the tokens. the word 'ACCEPT' will be
+printed if the grammer in the input file is correct other wise it print 'REJECT'. 
