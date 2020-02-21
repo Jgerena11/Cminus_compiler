@@ -14,7 +14,6 @@ class Scanner:
     kw = re.compile(r'\belse\b|\bif\b|\breturn\b|\bvoid\b|\bwhile\b|\bint\b')
 
     tokens = []
-    o = open('output.txt', 'w')
 
     def __init__(self, f):
         self.f = f
@@ -24,17 +23,14 @@ class Scanner:
         error = text[i]
         i+=1
         self.tokens.append('ERROR')
-        self.o.write('ERROR: ' + error + '\n')
         return i
 
     #process comments
     def comments(self, text, i, symbol):
-        # global line
         self.line = text
         comment = ""
         if symbol == '//':
             self.line = self.f.readline()
-            self.o.write('INPUT: ' + self.line)
             return 0
         else:
             while self.line and not self.line.isspace():
@@ -42,7 +38,6 @@ class Scanner:
                 if x:
                     return x.end()
                 self.line = self.f.readline()
-                self.o.write('INPUT: ' + self.line)
 
     #process special symbols
     def special_symbols(self, text, i):
@@ -52,12 +47,10 @@ class Scanner:
                 if self.open_comment.match(text[i:j+1]):
                     return self.comments(text[i+2:len(text)], i, text[i:j+1])
                 if self.compound_special_symbols.match(text[i:j+1]):
-                    self.o.write(text[i:j + 1] + '\n')
                     self.tokens.append(text[i:j+1])
                     i += 2
                     j += 1
                 elif self.special_sym.match(text[i]):
-                    self.o.write(text[i] + '\n')
                     self.tokens.append(text[i])
                     i += 1
                     j += 1
@@ -65,7 +58,6 @@ class Scanner:
                     return self.error(text,i)
             else:
                 if self.special_sym.match(text[i]):
-                    self.o.write(text[i] + '\n')
                     self.tokens.append(text[i])
                 elif not self.special_sym.match(text[i]):
                     return self.error(text,i)
@@ -80,15 +72,12 @@ class Scanner:
             if text[i] == '_':
                 if self.words.match(word):
                     self.tokens.append('ID')
-                    self.o.write(word + '\n')
                 return self.error(text, i)
             i += 1
         if self.kw.match(word):
             self.tokens.append(word)
-            self.o.write(word + '\n')
             return i
         else:
-            self.o.write('ID: ' + word + '\n')
             self.tokens.append('ID')
         return i
 
@@ -98,7 +87,6 @@ class Scanner:
         while i< len(text) and self.Nums.match(text[i]):
             NUM += text[i]
             i += 1
-        self.o.write('NUM: ' + NUM + '\n')
         self.tokens.append('NUM')
         return i
 
@@ -107,7 +95,6 @@ class Scanner:
             if self.line.isspace():
                 self.line = self.f.readline()
                 continue
-            else: self.o.write('INPUT: ' + self.line)
             i = 0
             while i < len(self.line) and self.line[i] != '\n':
                 if re.match('[a-zA-Z_]', self.line[i]):
@@ -140,10 +127,8 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.current_token = tokens[self.count]
-        print(tokens)
 
     def program(self):
-        # print('in program')
         self.declaration_list()
         if self.tokens[self.count] == '$':
             return
@@ -151,7 +136,6 @@ class Parser:
             self.result = False
 
     def declaration_list(self):
-        # print('in declaration_list')
         self.declaration()
         self.declaration_list_prime()
 
@@ -160,20 +144,17 @@ class Parser:
         self.current_token = self.tokens[self.count]
 
     def declaration_list_prime(self):
-        # print('in declaration_list_prime')
         if self.current_token in ['int', 'void']:
             self.declaration()
             self.declaration_list_prime()
 
     def type_specifier(self):
-        # print('in type_specifier')
         if self.current_token in ['int', 'void']:
             self.accept(self.current_token)
         else:
             self.result = False
 
     def declaration(self):
-        # print('in declaration')
         self.type_specifier()
         if self.tokens[self.count] =='ID':
             self.accept('ID')
@@ -198,7 +179,6 @@ class Parser:
         self.result = False
 
     def statement_list(self):
-        # print('in statement_list')
         if self.current_token in self.statement_first:
             self.statement()
             self.statement_list()
@@ -483,17 +463,16 @@ class Parser:
             self.arg_list()
 
 try:
-    file = input()
+    file = sys.argv[1]
     f = open(file, 'r')
-    # file = sys.argv[1]
     scanner = Scanner(f)
     scanner.run_scanner()
     parse = Parser(scanner.tokens)
     parse.program()
     if parse.result == True:
-        print('ACCEPT')
+        sys.stdout.write('ACCEPT')
     else:
-        print('REJECT')
+        sys.stdout.write('REJECT')
 except IOError:
     print('File not accessible')
 finally:
