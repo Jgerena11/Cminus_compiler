@@ -126,424 +126,422 @@ f.close()
 o.close()
 
 class Parser:
+
+    var_declaration_first = [';', '[']
+    type_specifier_first = ['int', 'void']
+    compound_stmt_first = ['{']
+    factor_first = ['(', 'ID', 'NUM']
+    expression_stmt_first = ['(', 'ID', 'NUM', ';']
+    expression_first = ['(', 'ID', 'NUM']
+    expression_double_prime_first = ['=', '*', '/', '+', '-', '<=', '>', '<', '>=', '==', '!=']
+    statement_first = ['(', 'ID', 'NUM', ';', 'if', 'while', 'return', '{']
+
     count = 0
     result = True
     def __init__(self, tokens):
         self.tokens = tokens
+        self.current_token = tokens[self.count]
         print(tokens)
 
     def program(self):
-        if self.declaration_list() and self.tokens[self.count] == '$':
-            # print('made it back to program')
-            return True
+        # print('in program')
+        self.declaration_list()
+        if self.tokens[self.count] == '$':
+            return
         else:
-            # print(self.tokens[self.count])
+            print('failed in program')
             self.result = False
-            return False
 
     def declaration_list(self):
-        #print('declaration_list')
-        if self.declaration():
-            if self.declaration_list_prime():
-                return True
-            else:
-                return False
+        # print('in declaration_list')
+        self.declaration()
+        self.declaration_list_prime()
 
-    def match(self,token, t):
-        #print('in match')
-        if token == t:
-            self.count += 1
-            print(token + ' accepted')
-            return True
-        else:
-            return False
+    def accept(self, token):
+        self.count += 1
+        self.current_token = self.tokens[self.count]
+        print(token+' accepted '+ str(self.count))
 
     def declaration_list_prime(self):
-        if self.declaration():
-            if self.declaration_list_prime():
-                return True
-            else:
-                return False
-        else:
-            return True
+        # print('in declaration_list_prime')
+        if self.current_token in ['int', 'void']:
+            self.declaration()
+            self.declaration_list_prime()
 
     def type_specifier(self):
-        #print('type-spec')
-        #print(self.tokens[self.count])
-        if self.match(tokens[self.count], 'int'):
-            return True
-        elif self.match(tokens[self.count], 'void'):
-            return True
+        # print('in type_specifier')
+        if self.current_token in ['int', 'void']:
+            self.accept(self.current_token)
         else:
-            return False
+            print('failed in type_specifier')
+            self.result = False
 
     def declaration(self):
-        #print('declaration')
-        if self.type_specifier():
-            if self.match(self.tokens[self.count], 'ID'):
-                if self.declaration_prime():
-                    return True
-            else:
-                return False
+        # print('in declaration')
+        self.type_specifier()
+        if self.tokens[self.count] =='ID':
+            self.accept('ID')
+            self.declaration_prime()
         else:
-            return False
+            self.result = False
+
 
     def var_declaration(self):
-        if self.match(self.tokens[self.count], ';'):
-            return True
-        elif self.match(tokens[self.count], '['):
-            if self.match(tokens[self.count], 'NUM'):
-                if self.match(tokens[self.count], ']'):
-                    if self.match(tokens[self.count], ';'):
-                        return True
-        else:
-            return False
+        # print('in var declaration')
+        if self.tokens[self.count] == ';':
+            self.accept(';')
+            return
+        elif self.tokens[self.count] == '[':
+            self.accept('[')
+            if self.tokens[self.count] == 'NUM':
+                self.accept('NUM')
+                if self.tokens[self.count] == ']':
+                    self.accept(']')
+                    if self.tokens[self.count] == ';':
+                        self.accept(';')
+                        return
+        print('failed in var_declaration')
+        self.result = False
 
     def statement_list(self):
-        if self.statement():
-            print('statement passed')
-            if self.statement_list():
-                return True
-        else:
-            return False
+        # print('in statement_list')
+        if self.current_token in self.statement_first:
+            self.statement()
+            self.statement_list()
 
     def local_declarations(self):
-        if self.type_specifier():
-            if self.match(self.tokens[self.count], 'ID'):
-                if self.var_declaration():
-                    if self.local_declarations():
-                        return True
-                    else:
-                        return False
-        else:
-            return True
+        # print('in local_declarations')
+        if self.current_token in ['int', 'void']:
+            self.accept(self.current_token)
+            if self.tokens[self.count] == 'ID':
+                self.accept('ID')
+                self.var_declaration()
+                self.local_declarations()
+
 
     def compound_stmt(self):
-        if self.match(self.tokens[self.count], '{'):
-            if self.local_declarations():
-                if self.statement_list() and self.match(self.tokens[self.count], '}'):
-                    return True
-                elif self.match(self.tokens[self.count], '}'):
-                        return True
-            return False
+        # print('in compound_stmt')
+        if self.tokens[self.count] == '{':
+            self.accept('{')
+            self.local_declarations()
+            self.statement_list()
+            if self.tokens[self.count] == '}':
+                self.accept('}')
+            else:
+                print('failed in compound_stmt')
+                self.result = False
         else:
-            return False
+            print('failed in compound stmt')
+            self.result = False
 
     def declaration_prime(self):
-        if self.var_declaration():
-            # print('here')
-            return True
-        elif self.match(self.tokens[self.count], '('):
-            if self.params():
-                if self.match(self.tokens[self.count], ')'):
-                    if self.compound_stmt():
-                        return True
+        # print('in declaration_prime')
+        if self.tokens[self.count] in self.var_declaration_first:
+            self.var_declaration()
+        elif self.tokens[self.count] == '(':
+            self.accept('(')
+            self.params()
+            if self.tokens[self.count] == ')':
+                self.accept(')')
+                self.compound_stmt()
 
     def param_prime(self):
-        if self.match(self.tokens[self.count], '['):
-             if self.match(self.tokens[self.count], ']'):
-                return True
-        else:
-            return True
+        # print('in param_prime')
+        if self.tokens[self.count] == '[':
+            self.accept('[')
+            if self.tokens[self.count] == ']':
+                self.accept(']')
+            else:
+                print('failed in param_prime')
+                self.result = False
 
     def param(self):
-        if self.type_specifier():
-            if self.match(self.tokens[self.count], 'ID'):
-                if self.param_prime():
-                    return True
-        return False
+        # print('in param')
+        self.type_specifier()
+        if self.tokens[self.count] == 'ID':
+            self.accept('ID')
+            self.param_prime()
 
     def param_list_prime(self):
-        if self.match(self.tokens[self.count], ','):
-            if self.param_list():
-                return True
-        else:
-            return True
+        # print('in param_list_prime')
+        if self.tokens[self.count] == ',':
+            self.accept(',')
+            self.param_list()
 
     def param_list(self):
-        if self.param():
-            if self.param_list_prime():
-                return True
-        else:
-            return False
+        # print('in param_list')
+        self.param()
+        self.param_list_prime()
 
     def params(self):
-        if self.match(self.tokens[self.count], 'void'):
-            if self.params_prime():
-                return True
-        elif self.match(self.tokens[self.count], 'int'):
-                if self.match(self.tokens[self.count], 'ID'):
-                    if self.param_prime():
-                        if self.param_list_prime():
-                            return True
-        return False
+        # print('in params')
+        if self.tokens[self.count] == 'void':
+            self.accept('void')
+            self.params_prime()
+        elif self.tokens[self.count] == 'int':
+            self.accept('int')
+            if self.tokens[self.count] == 'ID':
+                self.accept('ID')
+                self.param_prime()
+                self.param_list_prime()
+        else:
+            print('failed in params')
+            self.result = False
 
     def params_prime(self):
-        if self.match(self.tokens[self.count], 'ID'):
-            if self.param_prime():
-                if self.param_list_prime():
-                    return True
-        else:
-            return True
-        return False
+        # print('in params_prime')
+        if self.tokens[self.count] == 'ID':
+            self.accept('ID')
+            self.param_prime()
+            self.param_list_prime()
 
     def statement(self):
-        print(self.tokens[self.count])
-        if self.expression_stmt():
-            return True
-        elif self.compound_stmt():
-            print('compound stmt returned true')
-            return True
-        elif self.selection_stmt():
-            print('selection_stmt returned true')
-            return True
-        elif self.iteration_stmt():
-            print('iteration statement returned true')
-            return True
-        elif self.return_stmt():
-            print('return')
-            return True
+        # print('in statement')
+        if self.tokens[self.count] in self.expression_stmt_first:
+            self.expression_stmt()
+        elif self.tokens[self.count] in self.compound_stmt_first:
+            self.compound_stmt()
+        elif self.tokens[self.count] == 'if':
+            self.selection_stmt()
+        elif self.tokens[self.count] == 'while':
+            self.iteration_stmt()
+        elif self.tokens[self.count] == 'return':
+            self.return_stmt()
         else:
-            print('statement fails')
-            return False
+            print('failed in statement')
+            self.result = False
 
     def selection_stmt(self):
-        if self.match(self.tokens[self.count], 'if'):
-            if self.match(self.tokens[self.count], '('):
-                if self.expression():
-                    if self.match(self.tokens[self.count], ')'):
-                        if self.statement():
-                            if self.selection_stmt_prime():
-                                return True
-        else:
-            return False
+        # print('in selection_stmt')
+        if self.tokens[self.count] == 'if':
+            self.accept('if')
+            if self.tokens[self.count] == '(':
+                self.accept('(')
+                self.expression()
+                if self.tokens[self.count] == ')':
+                    self.accept(')')
+                    self.statement()
+                    self.selection_stmt_prime()
+                else:
+                    print('failed in selection_stmt')
+                    self.result = False
+            else:
+                print('failed in selection_stmt')
+                self.result = False
 
     def selection_stmt_prime(self):
-        if self.match(self.tokens[self.count], 'else'):
-            if self.statement():
-                return True
-        else:
-            return True
-        return False
+        # print('in selection_stmt_prime')
+        if self.tokens[self.count] == 'else':
+            self.accept('else')
+            self.statement()
 
     def iteration_stmt(self):
-        if self.match(self.tokens[self.count], 'while'):
-            if self.match(self.tokens[self.count], '('):
-                if self.expression():
-                    if self.match(self.tokens[self.count], ')'):
-                        if self.statement():
-                            return True
-        else:
-            return False
+        # print('in iteration_stmt')
+        if self.tokens[self.count] == 'while':
+            self.accept('while')
+            if self.tokens[self.count] == '(':
+                self.accept('(')
+                self.expression()
+                if self.tokens[self.count] == ')':
+                    self.accept(')')
+                    self.statement()
+                else:
+                    print('failed in iteration_stmt')
+                    self.result = False
+            else:
+                print('failed in iteration_stmt')
+                self.result = False
 
     def return_stmt(self):
-        if self.match(self.tokens[self.count], 'return'):
-            if self.return_stmt_prime():
-                return True
-        else:
-            return False
+        # print('in return_stmt')
+        if self.tokens[self.count] == 'return':
+            self.accept('return')
+            self.return_stmt_prime()
 
     def return_stmt_prime(self):
-        if self.match(self.tokens[self.count], ';'):
-            return True
-        elif self.expression():
-            if self.match(self.tokens[self.count], ';'):
-                return True
+        # print('in return_stmt_prime')
+        if self.tokens[self.count] == ';':
+           self.accept(';')
+        elif self.tokens[self.count] in self.expression_first:
+            self.expression()
+            if self.tokens[self.count] == ';':
+                self.accept(';')
+            else:
+                print('failed in return_stmt_prime')
+                self.result == False
         else:
-            return False
+            print('failed in return_stmt_prime')
+            self.result = False
+
 
     def expression_stmt(self):
-        print('made it to expression stmt')
-        if self.expression():
-            print('expression returned true')
-            if self.match(self.tokens[self.count], ';'):
-                return True
-        elif self.match(self.tokens[self.count], ';'):
-            return True
+        # print('in expression_stmt')
+        if self.tokens[self.count] in self.expression_first:
+            self.expression()
+            if self.tokens[self.count] == ';':
+                self.accept(';')
+            else:
+                print('failed in expression_stmt')
+                self.result = False
+        elif self.tokens[self.count] == ';':
+            self.accept(';')
         else:
-            print('expression returned false and no ;')
-            return False
+            print('failed in expression_stmt')
+            self.result = False
 
     def expression(self):
+        # print('in expression')
         if self.tokens[self.count] == '(':
-            if self.match(self.tokens[self.count], '('):
-                if self.term_prime():
-                    if self.additive_expression_prime():
-                        if self.simple_expression:
-                            return True
-        elif self.match(self.tokens[self.count], 'ID'):
-            if self.expression_prime():
-                return True
-        elif self.match(self.tokens[self.count], 'NUM'):
-            if self.term_prime():
-                if self.additive_expression_prime():
-                    if self.simple_expression():
-                        return True
+            self.accept('(')
+            self.expression()
+            if self.tokens[self.count] == ')':
+                self.accept(')')
+                self.term_prime()
+                self.additive_expression_prime()
+                self.simple_expression()
+            else:
+                print( 'failed in expression')
+                self.result = False
+        elif self.tokens[self.count] == 'ID':
+            self.accept('ID')
+            self.expression_prime()
+        elif self.tokens[self.count] == 'NUM':
+            self.accept('NUM')
+            self.term_prime()
+            self.additive_expression_prime()
+            self.simple_expression()
         else:
-            return False
+            print('failed in expression')
+            self.result = False
 
     def expression_prime(self):
-        if self.match(self.tokens[self.count], '['):
-            if self.expression():
-                if self.match(self.tokens[self.count], ']'):
-                    if self.expression_double_prime():
-                        return True
-        elif self.match(self.tokens[self.count], '('):
-            if self.args():
-                if self.match(self.tokens[self.count], ')'):
-                    if self.term_prime():
-                        if self.additive_expression():
-                            if self.simple_expression():
-                                return True
-        elif self.expression_double_prime():
-            return True
-        else:
-            return False
+        # print('in expression_prime')
+        if self.current_token == '[':
+            self.accept(self.current_token)
+            self.expression()
+            if self.tokens[self.count] == ']':
+                self.accept(']')
+                self.expression_double_prime()
+            else:
+                print('failed in expression_prime1')
+                self.result = False
+        elif self.tokens[self.count] == '(':
+            self.accept('(')
+            self.args()
+            if self.tokens[self.count] == ')':
+                self.accept(')')
+                self.term_prime()
+                self.additive_expression_prime()
+                self.simple_expression()
+            else:
+                print('failed in expresison_prime2')
+                self.result = False
+        elif self.tokens[self.count] in self.expression_double_prime_first:
+            self.expression_double_prime()
+        # else:
+        #     print('failed in expression prime3')
+        #     self.result = False
 
     def expression_double_prime(self):
-        print('made it expression double prime')
-        if self.term_prime():
-            print('term_prime returned true')
-            if self.additive_expression_prime():
-                print('additive expression returned true')
-                print('token here is'+ self.tokens[self.count])
-                if self.simple_expression():
-                    print('simple_expression returned true')
-                    return True
-                elif self.match(self.tokens[self.count], '='):
-                    print('made it to the equal sign')
-                    if self.expression():
-                        return True
-        print('expression_double_prime returns false')
-        return False
+        # print('in expression_double_prime')
+        if self.current_token == '=':
+            self.accept(self.current_token)
+            self.expression()
+        else:
+            self.term_prime()
+            self.additive_expression_prime()
+            self.simple_expression()
 
     def simple_expression(self):
-        if self.relop():
-            if self.additive_expression():
-                return True
-            else:
-                return False
-        else:
-            return False
+        # print('in simple_expression')
+        if self.current_token in ['<=', '<', '>', '>=', '==', '!=']:
+            self.accept(self.current_token)
+            self.additive_expression()
 
     def relop(self):
-        if self.match(self.tokens[self.count], '<='):
-            return True
-        if self.match(self.tokens[self.count], '<'):
-            return True
-        if self.match(self.tokens[self.count], '>'):
-            return True
-        if self.match(self.tokens[self.count], '>='):
-            return True
-        if self.match(self.tokens[self.count], '=='):
-            return True
-        if self.match(self.tokens[self.count], '!='):
-            return True
+        # print('in relop')
+        r = ['<=', '<', '>', '>=', '==', '!=']
+        if self.tokens[self.count] in r:
+            self.accept(self.tokens[self.count])
         else:
-            return False
+            print('failed in relop')
+            self.result = False
 
     def additive_expression(self):
-        if self.term():
-            if self.additive_expression_prime():
-                return True
-        else:
-            print('term and additive expression failed')
-            return False
+        # print('in additive_expression')
+        self.term()
+        self.additive_expression_prime()
 
     def additive_expression_prime(self):
-        if self.addop():
-            if self.term():
-                if self.additive_expression_prime():
-                    return True
-        else:
-            return True
-        return False
-
-    def addop(self):
-        if self.match(self.tokens[self.count], '+'):
-            return True
-        elif self.match(self.tokens[self.count], '-'):
-            return True
-        else:
-            return False
+        # print('in additive_expressoin_prime')
+        if self.current_token in ['+', '-']:
+            self.accept(self.current_token)
+            self.term()
+            self.additive_expression_prime()
 
     def term(self):
-        print('made it to term')
-        if self.factor():
-            print('factor has passed')
-            if self.term_prime():
-                return True
-        else:
-            print('factor failed as expected')
-            return False
+        # print('in in term')
+        self.factor()
+        self.term_prime()
 
     def term_prime(self):
-        if self.mulop():
-            if self.factor():
-                if self.term_prime():
-                    return True
-        else:
-            return True
-
-        return False
-
-    def mulop(self):
-        if self.match(self.tokens[self.count], '*'):
-            return True
-        elif self.match(self.tokens[self.count], '/'):
-            return True
-        else:
-            return False
+        # print('in term_prime')
+        if self.tokens[self.count] in ['*', '/']:
+            self.accept(self.tokens[self.count])
+            self.factor()
+            self.term_prime()
 
     def factor(self):
-        print('made it to factor!!!')
-        if self.match(self.tokens[self.count], '('):
-            if self.expression():
-                if self.match(self.tokens[self.count], ')'):
-                    return True
-        elif self.match(self.tokens[self.count], 'ID'):
-            if self.factor_prime():
-                return True
-        elif self.match(self.tokens[self.count], 'NUM'):
-            return True
+        # print('in factor')
+        if self.current_token == '(':
+            self.accept(self.current_token)
+            self.expression()
+            if self.current_token == ')':
+                self.accept(self.current_token)
+            else:
+                print('failed in factor')
+                self.result = False
+        elif self.current_token == 'ID':
+            print('id accepted here')
+            self.accept(self.current_token)
+            self.factor_prime()
+        elif self.current_token == 'NUM':
+            self.accept(self.current_token)
         else:
-            return False
+            print('failed in factor')
+            self.result = False
 
     def factor_prime(self):
-        if self.match(self.tokens[self.count], '['):
-            if self.expression():
-                if self.match(self.tokens[self.count], ']'):
-                    return True
-        elif self.match(self.tokens[self.count], '('):
-            if self.args():
-                if self.match(self.tokens[self.count], ')'):
-                    return True
-        else:
-            return True
-        return False
+        # print('in factor_prime')
+        if self.current_token == '[':
+            self.accept(self.current_token)
+            self.expression()
+            if self.current_token == ']':
+                self.accept(self.current_token)
+            else:
+                print('failed in factor_prime')
+                self.result = False
+        elif self.current_token == '(':
+            self.accept(self.current_token)
+            self.args()
+            if self.current_token == ')':
+                self.accept(self.current_token)
+            else:
+                print('failed in factor prime')
+                self.result = False
 
     def args(self):
-        if self.arg_list():
-            return True
-        else:
-            return True
+        # print('in args')
+        if self.current_token in self.expression_first:
+            self.expression()
+            self.arg_list()
 
     def arg_list(self):
-        if self.expression():
-            if self.arg_list_prime():
-                return True
-        else:
-            return False
-        return False
-
-    def arg_list_prime(self):
-        if self.match(self.tokens[self.count], ','):
-            if self.expression():
-                if self.arg_list_prime():
-                    return True
-        else:
-            return True
-        return False
+        # print('in arg_list')
+        if self.current_token == ',':
+            self.accept(self.current_token)
+            self.expression()
+            self.arg_list()
 
 
 parse = Parser(tokens)
