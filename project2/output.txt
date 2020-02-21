@@ -1,81 +1,13 @@
-INPUT: /* a program to perform euclids
-INPUT:     algorithm */
-INPUT: int god(int u, int v)
-KW: int
-ID: god
-(
-KW: int
-ID: u
-,
-KW: int
-ID: v
-)
-INPUT: { if (v==0) return u ;
-{
-KW: if
-(
-ID: v
-==
-NUM: 0
-)
-KW: return
-ID: u
-;
-INPUT:     else return god(v, u-u/v*v);
-KW: else
-KW: return
-ID: god
-(
-ID: v
-,
-ID: u
--
-ID: u
-/
-ID: v
-*
-ID: v
-)
-;
-INPUT:     /* u-u/v*v == u mod v */
-INPUT: }
-}
-INPUT: void main(void)
-KW: void
+INPUT: void main(void) {
+void
 ID: main
 (
-KW: void
+void
 )
-INPUT: { int x; int y;
 {
-KW: int
-ID: x
-;
-KW: int
-ID: y
-;
-INPUT:     x = input(); y = input();
-ID: x
-=
-ID: input
-(
-)
-;
-ID: y
-=
-ID: input
-(
-)
-;
-INPUT:     output(god(x,y));
-ID: output
-(
-ID: god
-(
-ID: x
-,
-ID: y
-)
-)
+INPUT: 	2 + 2;
+NUM: 2
++
+NUM: 2
 ;
 INPUT: }}

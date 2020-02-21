@@ -3,118 +3,126 @@ import sys
 import os.path
 from os import path
 
-file = input()
-if not path.exists(file):
-    print('File not found')
-# file = sys.argv[1]
-else:
-    f = open(file, "r")
-    line = f.readline()
+class Scanner:
+    # --------compiled patterns---------
+    open_comment = re.compile(r'/\*|//')
+    close_comment = re.compile(r'\*/')
+    special_sym = re.compile(r'\+|-|\*|/|<|>|;|,|\(|\)|\[|]|\{|}|=')
+    compound_special_symbols = re.compile(r'>=|<=|!=|==')
+    words = re.compile(r'[a-zA-Z]')
+    Nums = re.compile(r'[0-9]')
+    kw = re.compile(r'\belse\b|\bif\b|\breturn\b|\bvoid\b|\bwhile\b|\bint\b')
 
-tokens = []
-# --------compiled patterns---------
-open_comment = re.compile(r'/\*|//')
-close_comment = re.compile(r'\*/')
-special_sym = re.compile(r'\+|-|\*|/|<|>|;|,|\(|\)|\[|]|\{|}|=')
-compound_special_symbols = re.compile(r'>=|<=|!=|==')
-words = re.compile(r'[a-zA-Z]')
-Nums = re.compile(r'[0-9]')
-kw = re.compile(r'\belse\b|\bif\b|\breturn\b|\bvoid\b|\bwhile\b|\bint\b')
+    tokens = []
+    o = open('output.txt', 'w')
 
-# ---------functions------------
-def error(text, i):
-    error = text[i]
-    i+=1
-    tokens.append('ERROR')
-    return i
+    def __init__(self, f):
+        self.f = f
+        self.line = self.f.readline()
 
-#process comments
-def comments(text, i, symbol):
-    global line
-    line = text
-    comment = ""
-    if symbol == '//':
-        line = f.readline()
-        return 0
-    else:
-        while line and not line.isspace():
-            x = re.search('\*/', line)
-            if x:
-                return x.end()
-            line = f.readline()
-
-#process special symbols
-def special_symbols(text, i):
-    j = i+1
-    while i < len(text) and re.match('[^\w\s]', text[i]):
-
-        if j < len(text) and re.match('[^\w\s]', text[j]):
-            if open_comment.match(text[i:j+1]):
-                return comments(text[i+2:len(text)], i, text[i:j+1])
-            if compound_special_symbols.match(text[i:j+1]):
-                tokens.append(text[i:j+1])
-                i += 2
-                j += 1
-            elif special_sym.match(text[i]):
-                tokens.append(text[i])
-                i += 1
-                j += 1
-            elif not special_sym.match(text[i]):
-                return error(text,i)
-        else:
-            if special_sym.match(text[i]):
-                tokens.append(text[i])
-            elif not special_sym.match(text[i]):
-                return error(text,i)
-            i += 1
-    return i
-
-#process letters
-def letters(text, i):
-    word = ""
-    while i < len(text) and words.match(text[i]):
-        word += text[i]
-        if text[i] == '_':
-            if words.match(word):
-                tokens.append('ID')
-            return error(text, i)
-        i += 1
-    if kw.match(word):
-        tokens.append(word)
+    def error(self, text, i):
+        error = text[i]
+        i+=1
+        self.tokens.append('ERROR')
+        self.o.write('ERROR: ' + error + '\n')
         return i
-    else:
-        tokens.append('ID')
-    return i
 
-#process numbers
-def numbers(text, i):
-    NUM = ""
-    while i< len(text) and Nums.match(text[i]):
-        NUM += text[i]
-        i += 1
-    tokens.append('NUM')
-    return i
-
-while line:
-    if line.isspace():
-        line = f.readline()
-        continue
-    i = 0
-    while i < len(line) and line[i] != '\n':
-        if re.match('[a-zA-Z_]', line[i]):
-            i = letters(line, i)
-            continue
-        elif Nums.match(line[i]):
-            i = numbers(line, i)
-            continue
-        elif re.match(r'[^\w\s]', line[i]):
-            i = special_symbols(line, i)
-            continue
+    #process comments
+    def comments(self, text, i, symbol):
+        # global line
+        self.line = text
+        comment = ""
+        if symbol == '//':
+            self.line = self.f.readline()
+            self.o.write('INPUT: ' + self.line)
+            return 0
         else:
+            while self.line and not self.line.isspace():
+                x = re.search('\*/', self.line)
+                if x:
+                    return x.end()
+                self.line = self.f.readline()
+                self.o.write('INPUT: ' + self.line)
+
+    #process special symbols
+    def special_symbols(self, text, i):
+        j = i+1
+        while i < len(text) and re.match('[^\w\s]', text[i]):
+            if j < len(text) and re.match('[^\w\s]', text[j]):
+                if self.open_comment.match(text[i:j+1]):
+                    return self.comments(text[i+2:len(text)], i, text[i:j+1])
+                if self.compound_special_symbols.match(text[i:j+1]):
+                    self.o.write(text[i:j + 1] + '\n')
+                    self.tokens.append(text[i:j+1])
+                    i += 2
+                    j += 1
+                elif self.special_sym.match(text[i]):
+                    self.o.write(text[i] + '\n')
+                    self.tokens.append(text[i])
+                    i += 1
+                    j += 1
+                elif not self.special_sym.match(text[i]):
+                    return self.error(text,i)
+            else:
+                if self.special_sym.match(text[i]):
+                    self.o.write(text[i] + '\n')
+                    self.tokens.append(text[i])
+                elif not self.special_sym.match(text[i]):
+                    return self.error(text,i)
+                i += 1
+        return i
+
+    #process letters
+    def letters(self, text, i):
+        word = ""
+        while i < len(text) and self.words.match(text[i]):
+            word += text[i]
+            if text[i] == '_':
+                if self.words.match(word):
+                    self.tokens.append('ID')
+                    self.o.write(word + '\n')
+                return self.error(text, i)
             i += 1
-    line = f.readline()
-tokens.append('$')
-f.close()
+        if self.kw.match(word):
+            self.tokens.append(word)
+            self.o.write(word + '\n')
+            return i
+        else:
+            self.o.write('ID: ' + word + '\n')
+            self.tokens.append('ID')
+        return i
+
+    #process numbers
+    def numbers(self, text, i):
+        NUM = ""
+        while i< len(text) and self.Nums.match(text[i]):
+            NUM += text[i]
+            i += 1
+        self.o.write('NUM: ' + NUM + '\n')
+        self.tokens.append('NUM')
+        return i
+
+    def run_scanner(self):
+        while self.line:
+            if self.line.isspace():
+                self.line = self.f.readline()
+                continue
+            else: self.o.write('INPUT: ' + self.line)
+            i = 0
+            while i < len(self.line) and self.line[i] != '\n':
+                if re.match('[a-zA-Z_]', self.line[i]):
+                    i = self.letters(self.line, i)
+                    continue
+                elif self.Nums.match(self.line[i]):
+                    i = self.numbers(self.line, i)
+                    continue
+                elif re.match(r'[^\w\s]', self.line[i]):
+                    i = self.special_symbols(self.line, i)
+                    continue
+                else:
+                    i += 1
+            self.line = self.f.readline()
+        self.tokens.append('$')
 
 class Parser:
 
@@ -132,6 +140,7 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.current_token = tokens[self.count]
+        print(tokens)
 
     def program(self):
         # print('in program')
@@ -328,7 +337,7 @@ class Parser:
             if self.tokens[self.count] == ';':
                 self.accept(';')
             else:
-                self.result == False
+                self.result = False
         else:
             self.result = False
 
@@ -473,9 +482,20 @@ class Parser:
             self.expression()
             self.arg_list()
 
-parse = Parser(tokens)
-parse.program()
-if parse.result == True:
-    print('ACCEPT')
-else:
-    print('REJECT')
+try:
+    file = input()
+    f = open(file, 'r')
+    # file = sys.argv[1]
+    scanner = Scanner(f)
+    scanner.run_scanner()
+    parse = Parser(scanner.tokens)
+    parse.program()
+    if parse.result == True:
+        print('ACCEPT')
+    else:
+        print('REJECT')
+except IOError:
+    print('File not accessible')
+finally:
+    f.close
+
