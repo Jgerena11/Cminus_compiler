@@ -6,10 +6,9 @@ extern yytext[];
 extern FILE *yyin;
 %}
 %start start
-%token RENAME AS LP RP WHERE LB RB bin_op comp attri RELATION VAL comma
+%token RENAME AS LP RP WHERE LB RB bin_op comp attri RELATION VAL comma ERROR
 %%
 start         : expression                             {
-                                                       printf("\nACCEPT\n");
                                                         };
 expression    : one_relation_expression                 {
                                                         };
@@ -65,6 +64,7 @@ int main(int argc, char *argv[])
       exit(0);
    }
    yyparse();
+    printf("\nACCEPT\n");
 }
 yyerror()
 {
@@ -74,6 +74,5 @@ yyerror()
 }
 yywrap()
 {
-   printf("in yywarp\n");
-   exit(0);
+   return 1;
 }
