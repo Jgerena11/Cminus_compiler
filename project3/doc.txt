@@ -1,0 +1,19 @@
+Program: Project 3 - Lex/YACC
+Course: COP4620 - Constructor of Language Translators
+Name: Jose Gerena
+Instructor: Roger Eggen
+Due Date: 2/27/2020
+Submitted: 2/25/2020
+
+The following program recongnizes tokens from an input file and inputs them 
+into a parser. If the grammer matches that of the SQL syntax it will 
+print ACCEPT and otherwise REJECT. 
+
+Purpose of Project:
+	To gain experience using LEX and YACC (bison)
+	created using Lex and YACC. 
+
+Command Name: p3
+How to use:
+./p3 [filename]
+
