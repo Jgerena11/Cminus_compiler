@@ -1,7 +1,7 @@
 import re
 
 class Token:
-    def __init__(self, value, type):
+    def __init__(self, type, value):
         self.value = value
         self.type = type
 
@@ -21,8 +21,8 @@ class Scanner:
         self.f = f
         self.line = self.f.readline()
 
-    def add_token(self, string, type):
-        token = Token(string, type)
+    def add_token(self, token_type, value):
+        token = Token(token_type, value)
         self.tokens.append(token)
 
     def error(self, text, i):
@@ -64,7 +64,7 @@ class Scanner:
                     return self.error(text, i)
             else:
                 if self.special_sym.match(text[i]):
-                    self.add_token(text[i])
+                    self.add_token(text[i], text[i])
                 elif not self.special_sym.match(text[i]):
                     return self.error(text, i)
                 i += 1
@@ -77,14 +77,14 @@ class Scanner:
             word += text[i]
             if text[i] == '_':
                 if self.words.match(word):
-                    self.add_token(word, 'ID')
+                    self.add_token('ID', word)
                 return self.error(text, i)
             i += 1
         if self.kw.match(word):
-            self.add_token(word, 'KW')
+            self.add_token(word, word)
             return i
         else:
-            self.tokens.append(word, 'ID')
+            self.add_token('ID', word)
         return i
 
     #process numbers
@@ -93,8 +93,7 @@ class Scanner:
         while i < len(text) and self.Nums.match(text[i]):
             NUM += text[i]
             i += 1
-        self.tokens.append('NUM')
-        self.add_token(NUM, 'NUM')
+        self.add_token('NUM', NUM)
         return i
 
     def run_scanner(self):
@@ -116,4 +115,4 @@ class Scanner:
                 else:
                     i += 1
             self.line = self.f.readline()
-        self.tokens.append('$')
+        self.add_token('$', '$')
