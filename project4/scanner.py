@@ -1,5 +1,10 @@
 import re
 
+class Token:
+    def __init__(self, type, value):
+        self.value = value
+        self.type = type
+
 class Scanner:
     # --------compiled patterns---------
     open_comment = re.compile(r'/\*|//')
@@ -16,10 +21,14 @@ class Scanner:
         self.f = f
         self.line = self.f.readline()
 
+    def add_token(self, token_type, value):
+        token = Token(token_type, value)
+        self.tokens.append(token)
+
     def error(self, text, i):
         error = text[i]
         i+=1
-        self.tokens.append('ERROR')
+        self.add_token('ERROR', 'ERROR')
         return i
 
     #process comments
@@ -44,20 +53,20 @@ class Scanner:
                 if self.open_comment.match(text[i:j+1]):
                     return self.comments(text[i+2:len(text)], i, text[i:j+1])
                 if self.compound_special_symbols.match(text[i:j+1]):
-                    self.tokens.append(text[i:j+1])
+                    self.add_token(text[i:j+1], text[i:j+1])
                     i += 2
                     j += 1
                 elif self.special_sym.match(text[i]):
-                    self.tokens.append(text[i])
+                    self.add_token(text[i], text[i])
                     i += 1
                     j += 1
                 elif not self.special_sym.match(text[i]):
-                    return self.error(text,i)
+                    return self.error(text, i)
             else:
                 if self.special_sym.match(text[i]):
-                    self.tokens.append(text[i])
+                    self.add_token(text[i], text[i])
                 elif not self.special_sym.match(text[i]):
-                    return self.error(text,i)
+                    return self.error(text, i)
                 i += 1
         return i
 
@@ -68,23 +77,23 @@ class Scanner:
             word += text[i]
             if text[i] == '_':
                 if self.words.match(word):
-                    self.tokens.append('ID')
+                    self.add_token('ID', word)
                 return self.error(text, i)
             i += 1
         if self.kw.match(word):
-            self.tokens.append(word)
+            self.add_token(word, word)
             return i
         else:
-            self.tokens.append('ID')
+            self.add_token('ID', word)
         return i
 
     #process numbers
     def numbers(self, text, i):
         NUM = ""
-        while i< len(text) and self.Nums.match(text[i]):
+        while i < len(text) and self.Nums.match(text[i]):
             NUM += text[i]
             i += 1
-        self.tokens.append('NUM')
+        self.add_token('NUM', NUM)
         return i
 
     def run_scanner(self):
@@ -106,4 +115,4 @@ class Scanner:
                 else:
                     i += 1
             self.line = self.f.readline()
-        self.tokens.append('$')
+        self.add_token('$', '$')

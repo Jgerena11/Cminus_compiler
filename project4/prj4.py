@@ -71,7 +71,7 @@ class Parser:
 
     def program(self):
         self.declaration_list()
-        if self.tokens[self.count] == '$':
+        if self.current_token.type == '$':
             return
         else:
             self.result = False
@@ -85,19 +85,19 @@ class Parser:
         self.current_token = self.tokens[self.count]
 
     def declaration_list_prime(self):
-        if self.current_token in ['int', 'void']:
+        if self.current_token.type in ['int', 'void']:
             self.declaration()
             self.declaration_list_prime()
 
     def type_specifier(self):
-        if self.current_token in ['int', 'void']:
+        if self.current_token.type in ['int', 'void']:
             self.accept(self.current_token)
         else:
             self.result = False
 
     def declaration(self):
         self.type_specifier()
-        if self.tokens[self.count] =='ID':
+        if self.current_token.type =='ID':
             self.accept('ID')
             self.declaration_prime()
         else:
@@ -105,40 +105,40 @@ class Parser:
 
 
     def var_declaration(self):
-        if self.tokens[self.count] == ';':
+        if self.current_token.type == ';':
             self.accept(';')
             return
-        elif self.tokens[self.count] == '[':
+        elif self.current_token.type == '[':
             self.accept('[')
-            if self.tokens[self.count] == 'NUM':
+            if self.current_token.type == 'NUM':
                 self.accept('NUM')
-                if self.tokens[self.count] == ']':
+                if self.current_token.type == ']':
                     self.accept(']')
-                    if self.tokens[self.count] == ';':
+                    if self.current_token.type == ';':
                         self.accept(';')
                         return
         self.result = False
 
     def statement_list(self):
-        if self.current_token in self.statement_first:
+        if self.current_token.type in self.statement_first:
             self.statement()
             self.statement_list()
 
     def local_declarations(self):
-        if self.current_token in ['int', 'void']:
+        if self.current_token.type in ['int', 'void']:
             self.accept(self.current_token)
-            if self.tokens[self.count] == 'ID':
+            if self.current_token.type == 'ID':
                 self.accept('ID')
                 self.var_declaration()
                 self.local_declarations()
 
 
     def compound_stmt(self):
-        if self.tokens[self.count] == '{':
+        if self.current_token.type == '{':
             self.accept('{')
             self.local_declarations()
             self.statement_list()
-            if self.tokens[self.count] == '}':
+            if self.current_token.type == '}':
                 self.accept('}')
             else:
                 self.result = False
@@ -146,31 +146,31 @@ class Parser:
             self.result = False
 
     def declaration_prime(self):
-        if self.tokens[self.count] in self.var_declaration_first:
+        if self.current_token.type in self.var_declaration_first:
             self.var_declaration()
-        elif self.tokens[self.count] == '(':
+        elif self.current_token.type == '(':
             self.accept('(')
             self.params()
-            if self.tokens[self.count] == ')':
+            if self.current_token.type == ')':
                 self.accept(')')
                 self.compound_stmt()
 
     def param_prime(self):
-        if self.tokens[self.count] == '[':
+        if self.current_token.type == '[':
             self.accept('[')
-            if self.tokens[self.count] == ']':
+            if self.current_token.type == ']':
                 self.accept(']')
             else:
                 self.result = False
 
     def param(self):
         self.type_specifier()
-        if self.tokens[self.count] == 'ID':
+        if self.current_token.type == 'ID':
             self.accept('ID')
             self.param_prime()
 
     def param_list_prime(self):
-        if self.tokens[self.count] == ',':
+        if self.current_token.type == ',':
             self.accept(',')
             self.param_list()
 
@@ -179,12 +179,12 @@ class Parser:
         self.param_list_prime()
 
     def params(self):
-        if self.tokens[self.count] == 'void':
+        if self.current_token.type == 'void':
             self.accept('void')
             self.params_prime()
-        elif self.tokens[self.count] == 'int':
+        elif self.current_token.type == 'int':
             self.accept('int')
-            if self.tokens[self.count] == 'ID':
+            if self.current_token.type == 'ID':
                 self.accept('ID')
                 self.param_prime()
                 self.param_list_prime()
@@ -192,32 +192,32 @@ class Parser:
             self.result = False
 
     def params_prime(self):
-        if self.tokens[self.count] == 'ID':
+        if self.current_token.type == 'ID':
             self.accept('ID')
             self.param_prime()
             self.param_list_prime()
 
     def statement(self):
-        if self.tokens[self.count] in self.expression_stmt_first:
+        if self.current_token.type in self.expression_stmt_first:
             self.expression_stmt()
-        elif self.tokens[self.count] in self.compound_stmt_first:
+        elif self.current_token.type in self.compound_stmt_first:
             self.compound_stmt()
-        elif self.tokens[self.count] == 'if':
+        elif self.current_token.type == 'if':
             self.selection_stmt()
-        elif self.tokens[self.count] == 'while':
+        elif self.current_token.type == 'while':
             self.iteration_stmt()
-        elif self.tokens[self.count] == 'return':
+        elif self.current_token.type == 'return':
             self.return_stmt()
         else:
             self.result = False
 
     def selection_stmt(self):
-        if self.tokens[self.count] == 'if':
+        if self.current_token.type == 'if':
             self.accept('if')
-            if self.tokens[self.count] == '(':
+            if self.current_token.type == '(':
                 self.accept('(')
                 self.expression()
-                if self.tokens[self.count] == ')':
+                if self.current_token.type == ')':
                     self.accept(')')
                     self.statement()
                     self.selection_stmt_prime()
@@ -227,17 +227,17 @@ class Parser:
                 self.result = False
 
     def selection_stmt_prime(self):
-        if self.tokens[self.count] == 'else':
+        if self.current_token.type == 'else':
             self.accept('else')
             self.statement()
 
     def iteration_stmt(self):
-        if self.tokens[self.count] == 'while':
+        if self.current_token.type == 'while':
             self.accept('while')
-            if self.tokens[self.count] == '(':
+            if self.current_token.type == '(':
                 self.accept('(')
                 self.expression()
-                if self.tokens[self.count] == ')':
+                if self.current_token.type == ')':
                     self.accept(')')
                     self.statement()
                 else:
@@ -246,16 +246,16 @@ class Parser:
                 self.result = False
 
     def return_stmt(self):
-        if self.tokens[self.count] == 'return':
+        if self.current_token.type == 'return':
             self.accept('return')
             self.return_stmt_prime()
 
     def return_stmt_prime(self):
-        if self.tokens[self.count] == ';':
+        if self.current_token.type == ';':
            self.accept(';')
-        elif self.tokens[self.count] in self.expression_first:
+        elif self.current_token.type in self.expression_first:
             self.expression()
-            if self.tokens[self.count] == ';':
+            if self.current_token.type == ';':
                 self.accept(';')
             else:
                 self.result = False
@@ -264,32 +264,32 @@ class Parser:
 
 
     def expression_stmt(self):
-        if self.tokens[self.count] in self.expression_first:
+        if self.current_token.type in self.expression_first:
             self.expression()
-            if self.tokens[self.count] == ';':
+            if self.current_token.type == ';':
                 self.accept(';')
             else:
                 self.result = False
-        elif self.tokens[self.count] == ';':
+        elif self.current_token.type == ';':
             self.accept(';')
         else:
             self.result = False
 
     def expression(self):
-        if self.tokens[self.count] == '(':
+        if self.current_token.type == '(':
             self.accept('(')
             self.expression()
-            if self.tokens[self.count] == ')':
+            if self.current_token.type == ')':
                 self.accept(')')
                 self.term_prime()
                 self.additive_expression_prime()
                 self.simple_expression()
             else:
                 self.result = False
-        elif self.tokens[self.count] == 'ID':
+        elif self.current_token.type == 'ID':
             self.accept('ID')
             self.expression_prime()
-        elif self.tokens[self.count] == 'NUM':
+        elif self.current_token.type == 'NUM':
             self.accept('NUM')
             self.term_prime()
             self.additive_expression_prime()
@@ -298,29 +298,29 @@ class Parser:
             self.result = False
 
     def expression_prime(self):
-        if self.current_token == '[':
+        if self.current_token.type == '[':
             self.accept(self.current_token)
             self.expression()
-            if self.tokens[self.count] == ']':
+            if self.current_token.type == ']':
                 self.accept(']')
                 self.expression_double_prime()
             else:
                 self.result = False
-        elif self.tokens[self.count] == '(':
+        elif self.current_token.type == '(':
             self.accept('(')
             self.args()
-            if self.tokens[self.count] == ')':
+            if self.current_token.type == ')':
                 self.accept(')')
                 self.term_prime()
                 self.additive_expression_prime()
                 self.simple_expression()
             else:
                 self.result = False
-        elif self.tokens[self.count] in self.expression_double_prime_first:
+        elif self.current_token.type in self.expression_double_prime_first:
             self.expression_double_prime()
 
     def expression_double_prime(self):
-        if self.current_token == '=':
+        if self.current_token.type == '=':
             self.accept(self.current_token)
             self.expression()
         else:
@@ -329,14 +329,14 @@ class Parser:
             self.simple_expression()
 
     def simple_expression(self):
-        if self.current_token in ['<=', '<', '>', '>=', '==', '!=']:
+        if self.current_token.type in ['<=', '<', '>', '>=', '==', '!=']:
             self.accept(self.current_token)
             self.additive_expression()
 
     def relop(self):
         r = ['<=', '<', '>', '>=', '==', '!=']
-        if self.tokens[self.count] in r:
-            self.accept(self.tokens[self.count])
+        if self.current_token.type in r:
+            self.accept(self.current_token.type)
         else:
             self.result = False
 
@@ -345,7 +345,7 @@ class Parser:
         self.additive_expression_prime()
 
     def additive_expression_prime(self):
-        if self.current_token in ['+', '-']:
+        if self.current_token.type in ['+', '-']:
             self.accept(self.current_token)
             self.term()
             self.additive_expression_prime()
@@ -355,57 +355,56 @@ class Parser:
         self.term_prime()
 
     def term_prime(self):
-        if self.tokens[self.count] in ['*', '/']:
-            self.accept(self.tokens[self.count])
+        if self.current_token.type in ['*', '/']:
+            self.accept(self.current_token.type)
             self.factor()
             self.term_prime()
 
     def factor(self):
-        if self.current_token == '(':
+        if self.current_token.type == '(':
             self.accept(self.current_token)
             self.expression()
-            if self.current_token == ')':
+            if self.current_token.type == ')':
                 self.accept(self.current_token)
             else:
                 self.result = False
-        elif self.current_token == 'ID':
+        elif self.current_token.type == 'ID':
             self.accept(self.current_token)
             self.factor_prime()
-        elif self.current_token == 'NUM':
+        elif self.current_token.type == 'NUM':
             self.accept(self.current_token)
         else:
             self.result = False
 
     def factor_prime(self):
-        if self.current_token == '[':
+        if self.current_token.type == '[':
             self.accept(self.current_token)
             self.expression()
-            if self.current_token == ']':
+            if self.current_token.type == ']':
                 self.accept(self.current_token)
             else:
                 self.result = False
-        elif self.current_token == '(':
+        elif self.current_token.type == '(':
             self.accept(self.current_token)
             self.args()
-            if self.current_token == ')':
+            if self.current_token.type == ')':
                 self.accept(self.current_token)
             else:
                 self.result = False
 
     def args(self):
-        if self.current_token in self.expression_first:
+        if self.current_token.type in self.expression_first:
             self.expression()
             self.arg_list()
 
     def arg_list(self):
-        if self.current_token == ',':
+        if self.current_token.type == ',':
             self.accept(self.current_token)
             self.expression()
             self.arg_list()
 
 try:
-    #file = sys.argv[1]
-    file = input()
+    file = sys.argv[1]
     f = open(file, 'r')
     scanner = Scanner(f)
     scanner.run_scanner()
