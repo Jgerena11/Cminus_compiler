@@ -4,6 +4,8 @@ import sys
 
 class Parser:
 
+    SA = SemanticAnalyzer()
+
     var_declaration_first = [';', '[']
     type_specifier_first = ['int', 'void']
     compound_stmt_first = ['{']
@@ -16,7 +18,7 @@ class Parser:
     count = 0
     result = True
 
-    #-----parser functions --------
+    #----- parser functions --------
 
     def __init__(self, tokens):
         self.tokens = tokens
@@ -43,22 +45,24 @@ class Parser:
             self.declaration()
             self.declaration_list_prime()
 
-    def type_specifier(self):
+    def type_specifier(self, declaration):
         if self.current_token.type in ['int', 'void']:
+            declaration.assign_type(self.current_token.value)
             self.accept(self.current_token)
         else:
             self.result = False
 
     def declaration(self):
-        self.type_specifier()
+        declaration = self.SA.Declaration()
+        self.type_specifier(declaration)
         if self.current_token.type =='ID':
+            self.result = declaration.assign_id(self.current_token.value)
             self.accept('ID')
-            self.declaration_prime()
+            self.declaration_prime(declaration)
         else:
             self.result = False
 
-
-    def var_declaration(self):
+    def var_declaration(self, declaration):
         if self.current_token.type == ';':
             self.accept(';')
             return
@@ -99,7 +103,7 @@ class Parser:
         else:
             self.result = False
 
-    def declaration_prime(self):
+    def declaration_prime(self, declaration):
         if self.current_token.type in self.var_declaration_first:
             self.var_declaration()
         elif self.current_token.type == '(':
