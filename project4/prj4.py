@@ -2,108 +2,8 @@ from scanner import *
 from sem_analyzer import *
 import sys
 
-class Program:
-    declaration = None
-    PS = ProgramScope()
-
-    def declare(self):
-        self. declaration = Declaration()
-        return self.declaration
-
-class Declaration(Program):
-    pass
-    type = None
-    id = None
-    dec_prime = None
-
-    def init_dec_prime(self):
-        self.dec_prime = DeclarationPrime(self.type, self.id)
-        return self.dec_prime
-
-    def verify(self, ):
-        if self.dec_prime.verify():
-            return True
-        else:
-            print('failed in declaration')
-            return False
-
-    def assign_type(self, type):
-        self.type = type
-
-    def assign_id(self, id):
-        if self.PS.current_scope_has_id(id):
-            print(self.type)
-            return False
-        else:
-            self.id = id
-            return True
-
-class TypeSpecifier:
-    def __init__(self, type):
-        self.type = type
-
-class DeclarationPrime(Declaration):
-    pass
-    var_declaration = None
-    func_declaration = None
-
-    def __init__(self, type, id):
-        self.id = id
-        self.type = type
-
-    def verify(self):
-
-        if self.var_declaration is None:
-            print('failed in declaration prime1')
-            return False
-        elif self.func_declaration is None:
-            if self.var_declaration.verify():
-                return True
-            else:
-                print('failed in declaration prime2')
-                return False
-
-    def init_var(self):
-        self.var_declaration = VarDeclaration(self.type, self.id)
-        return self.var_declaration
-
-    def init_function(self):
-        self.func_declaration = FunDeclaration()
-        return self.func_declaration
-
-class FunDeclaration:
-    type = None
-    id = None
-    params = None
-    scope = None
-    return_type = None
-    return_value = None
-
-    def __init__(self, type, id):
-        self.type = type
-        self.id = id
-        self.current_table.append(id, self)
-
-class VarDeclaration(DeclarationPrime):
-    pass
-    has_array = False
-    array = None
-    array_size = None
-
-    def __init__(self, type, id):
-        self.type = type
-        self.id = id
-
-    def verify(self):
-
-        if self.type == 'void':
-            print('failed in var_declaration')
-            return False
-        self.PS.add(self.id, self)
-        return True
 
 class Parser:
-
     var_declaration_first = [';', '[']
     type_specifier_first = ['int', 'void']
     compound_stmt_first = ['{']
@@ -116,32 +16,35 @@ class Parser:
     count = 0
     result = True
 
-    #----- parser functions --------
+    # ----- parser functions --------
 
     def __init__(self, tokens):
         self.tokens = tokens
         self.current_token = tokens[self.count]
 
-    def program(self):
-        program = Program()
-        self.declaration_list(program)
-        if self.current_token.type == '$':
-            return
-        else:
-            self.result = False
-
-    def declaration_list(self, program):
-        self.declaration(program)
-        self.declaration_list_prime(program)
-
     def accept(self, token):
         self.count += 1
         self.current_token = self.tokens[self.count]
 
-    def declaration_list_prime(self, program):
+    def reject(self):
+        self.result = False
+
+    def program(self):
+        program = Program()
+        self.declaration_list(program.declaration_list())
+        if self.current_token.type == '$':
+            return
+        else:
+            self.reject
+
+    def declaration_list(self, dec_list):
+        self.declaration(dec_list.init_declaration())
+        self.declaration_list_prime(dec_list.init_dec_list_prime())
+
+    def declaration_list_prime(self, dec_list_prime):
         if self.current_token.type in ['int', 'void']:
-            self.declaration()
-            self.declaration_list_prime()
+            self.declaration(dec_list_prime.init_declaration())
+            self.declaration_list_prime(dec_list_prime.init_dec_list_prime())
 
     def type_specifier(self):
         if self.current_token.type in ['int', 'void']:
@@ -149,24 +52,22 @@ class Parser:
             self.accept(self.current_token)
             return type_spec.type
         else:
-            self.result = False
+            self.reject
 
-    def declaration(self, program):
-        declaration = program.declare()
+    def declaration(self, declaration):
         declaration.assign_type(self.type_specifier())
-        if self.current_token.type =='ID':
-            self.result = declaration.assign_id(self.current_token.value)
+        if self.current_token.type == 'ID':
+            declaration.assign_id(self.current_token.value)
             self.accept('ID')
-            self.declaration_prime(declaration)
-            self.result = declaration.verify()
+            if not declaration.verify(): self.reject()
+            self.declaration_prime(declaration.init_dec_prime())
         else:
-            self.result = False
+            self.reject
 
-    def var_declaration(self, declaration_prime):
-        var_dec = declaration_prime.init_var()
+    def var_declaration(self, var_dec):
         if self.current_token.type == ';':
             self.accept(';')
-            self.result = False if var_dec.verify else True
+            if not var_dec.verify(): self.reject()
             return
         elif self.current_token.type == '[':
             self.accept('[')
@@ -177,8 +78,9 @@ class Parser:
                     self.accept(']')
                     if self.current_token.type == ';':
                         self.accept(';')
+                        if not var_dec.verify(): self.reject()
                         return
-        self.result = False
+        self.reject()
 
     def statement_list(self):
         if self.current_token.type in self.statement_first:
@@ -193,7 +95,6 @@ class Parser:
                 self.var_declaration()
                 self.local_declarations()
 
-
     def compound_stmt(self):
         if self.current_token.type == '{':
             self.accept('{')
@@ -206,13 +107,12 @@ class Parser:
         else:
             self.result = False
 
-    def declaration_prime(self, declaration):
-        dec_prime = declaration.init_dec_prime()
+    def declaration_prime(self, dec_prime):
         if self.current_token.type in self.var_declaration_first:
-            self.var_declaration(dec_prime)
+            self.var_declaration(dec_prime.init_var())
         elif self.current_token.type == '(':
             self.accept('(')
-            self.params()
+            self.params(dec_prime.init_function())
             if self.current_token.type == ')':
                 self.accept(')')
                 self.compound_stmt()
@@ -240,7 +140,7 @@ class Parser:
         self.param()
         self.param_list_prime()
 
-    def params(self):
+    def params(self, function):
         if self.current_token.type == 'void':
             self.accept('void')
             self.params_prime()
@@ -314,7 +214,7 @@ class Parser:
 
     def return_stmt_prime(self):
         if self.current_token.type == ';':
-           self.accept(';')
+            self.accept(';')
         elif self.current_token.type in self.expression_first:
             self.expression()
             if self.current_token.type == ';':

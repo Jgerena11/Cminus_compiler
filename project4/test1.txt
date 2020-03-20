@@ -1,1 +1,4 @@
-int x[2];
+int x;
+int y;
+int z;
+int t[3];

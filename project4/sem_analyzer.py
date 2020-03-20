@@ -23,6 +23,9 @@ class ProgramScope:
             else:
                 return False
 
+        def get_keys(self):
+            return self.table.keys()
+
     class DoubleLinkedList:
         head = None
         tail = None
@@ -66,7 +69,7 @@ class ProgramScope:
         self.current_scope = self.SymbolTable()
         self.list.add_last(self.current_scope)
 
-    #----add new scope to program -----------
+    # ----add new scope to program -----------
     def new_scope(self):
         table = self.SymbolTable()
         self.current_scope = table
@@ -81,7 +84,7 @@ class ProgramScope:
                 node = node.prev
         return None
 
-    #----- check if current scope has id --------
+    # ----- check if current scope has id --------
     def current_scope_has_id(self, id):
         if self.current_scope.has_id(id):
             return True
@@ -96,12 +99,12 @@ class ProgramScope:
         else:
             return False
 
-    #returns the type object of the id
+    # returns the type object of the id
     def get(self, id):
         scope = self.get_scope(id)
         return scope.get(id)
 
-    #update type of id in the program
+    # update type of id in the program
     def update(self, id, data):
         scope = self.get_scope(id)
         scope.update(id, data)
@@ -109,11 +112,107 @@ class ProgramScope:
     def add(self, id, type):
         self.current_scope.append(id, type)
 
+    def print_keys(self):
+        print(self.current_scope.get_keys())
 
 
+# ---------- semantic classes ------------------------------
 
+class Program:
+    dec_list = None
+    PS = ProgramScope()
 
+    def declaration_list(self):
+        self.dec_list = DeclarationList()
+        return self.dec_list
 
+class DeclarationList(Program):
+    declarations = []
+    dec_list_prime = None
 
+    def init_declaration(self):
+        declaration = Declaration()
+        self.declarations.append(declaration)
+        return declaration
 
+    def init_dec_list_prime(self):
+        dec_list_prime = DeclarationList()
+        return dec_list_prime
 
+class Declaration(DeclarationList):
+    pass
+    type = None
+    id = None
+    dec_prime = None
+
+    def init_dec_prime(self):
+        self.dec_prime = DeclarationPrime(self.type, self.id)
+        return self.dec_prime
+
+    def verify(self):
+        if self.PS.current_scope_has_id(self.id):
+            print('failed in declaration')
+            return False
+        else:
+            self.PS.add(self.id, self.type)
+            return True
+
+    def assign_type(self, type):
+        self.type = type
+
+    def assign_id(self, id):
+        self.id = id
+
+class TypeSpecifier:
+    def __init__(self, type):
+        self.type = type
+
+class DeclarationPrime(Declaration):
+    pass
+    var_declaration = None
+    func_declaration = None
+
+    def __init__(self, type, id):
+        self.id = id
+        self.type = type
+
+    def init_var(self):
+        self.var_declaration = VarDeclaration(self.type, self.id)
+        return self.var_declaration
+
+    def init_function(self):
+        self.func_declaration = FunDeclaration()
+        return self.func_declaration
+
+class FunDeclaration(DeclarationPrime):
+    type = None
+    id = None
+    params = {}
+    scope = None
+    return_type = None
+    return_value = None
+
+    class Params:
+        type = None
+        id = None
+
+    def __init__(self, type, id):
+        self.type = type
+        self.id = id
+
+class VarDeclaration(DeclarationPrime):
+    pass
+    has_array = False
+    array = None
+    array_size = None
+
+    def __init__(self, type, id):
+        self.type = type
+        self.id = id
+
+    def verify(self):
+        if self.type == 'void':
+            print('failed in var_declaration')
+            return False
+        self.PS.add(self.id, self)
+        return True
