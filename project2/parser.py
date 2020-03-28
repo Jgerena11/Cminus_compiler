@@ -349,6 +349,7 @@ class Parser:
             self.accept('ID')
             self.expression_prime()
         elif self.tokens[self.count] == 'NUM':
+            print(self.current_token.value)
             self.accept('NUM')
             self.term_prime()
             self.additive_expression_prime()
@@ -431,6 +432,7 @@ class Parser:
             self.accept(self.current_token)
             self.factor_prime()
         elif self.current_token == 'NUM':
+            print(self.current_token.value)
             self.accept(self.current_token)
         else:
             self.result = False
@@ -463,8 +465,9 @@ class Parser:
             self.arg_list()
 
 try:
-    file = sys.argv[1]
-    f = open(file, 'r')
+    # file = sys.argv[1]
+    # file = 'input.txt'
+    f = open('input.txt', 'r')
     scanner = Scanner(f)
     scanner.run_scanner()
     parse = Parser(scanner.tokens)

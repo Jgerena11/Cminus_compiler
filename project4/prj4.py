@@ -27,6 +27,7 @@ class Parser:
         self.current_token = self.tokens[self.count]
 
     def reject(self):
+        print('rejected on '+self.current_token.value)
         self.result = False
 
     def program(self):
@@ -77,103 +78,110 @@ class Parser:
                 if self.current_token.type == ']':
                     self.accept(']')
                     if self.current_token.type == ';':
-                        self.accept(';')
-                        if not var_dec.verify(): self.reject()
+                        self.accept(';') if var_dec.verify() else self.reject()
                         return
         self.reject()
 
-    def statement_list(self):
+    def statement_list(self, function):
         if self.current_token.type in self.statement_first:
-            self.statement()
-            self.statement_list()
+            self.statement(function)
+            self.statement_list(function)
 
-    def local_declarations(self):
+    def local_declarations(self, function):
         if self.current_token.type in ['int', 'void']:
+            type = self.current_token.value
             self.accept(self.current_token)
             if self.current_token.type == 'ID':
+                id = self.current_token.value
                 self.accept('ID')
-                self.var_declaration()
-                self.local_declarations()
+                self.var_declaration(function.declare_var(type, id))
+                self.local_declarations(function)
 
-    def compound_stmt(self):
+    def compound_stmt(self, function):
         if self.current_token.type == '{':
+            function.add_scope()
             self.accept('{')
-            self.local_declarations()
-            self.statement_list()
+            self.local_declarations(function)
+            self.statement_list(function)
             if self.current_token.type == '}':
-                self.accept('}')
+                self.accept('}') if function.verify() else self.reject()
             else:
-                self.result = False
+                self.reject()
         else:
-            self.result = False
+            self.reject()
 
     def declaration_prime(self, dec_prime):
         if self.current_token.type in self.var_declaration_first:
             self.var_declaration(dec_prime.init_var())
         elif self.current_token.type == '(':
             self.accept('(')
-            self.params(dec_prime.init_function())
+            function = dec_prime.init_function()
+            self.params(function)
             if self.current_token.type == ')':
                 self.accept(')')
-                self.compound_stmt()
+                self.compound_stmt(function)
 
-    def param_prime(self):
+    def param_prime(self, function):
         if self.current_token.type == '[':
             self.accept('[')
             if self.current_token.type == ']':
                 self.accept(']')
             else:
-                self.result = False
+                self.reject()
 
-    def param(self):
-        self.type_specifier()
+    def param(self, function):
+        type = self.type_specifier()
         if self.current_token.type == 'ID':
-            self.accept('ID')
-            self.param_prime()
+            self.accept('ID') if function.add_param(self.current_token.value, type) else self.reject()
+            self.param_prime(function)
 
-    def param_list_prime(self):
+    def param_list_prime(self, function):
         if self.current_token.type == ',':
             self.accept(',')
-            self.param_list()
+            self.param_list(function)
 
-    def param_list(self):
-        self.param()
-        self.param_list_prime()
+    def param_list(self, function):
+        self.param(function)
+        self.param_list_prime(function)
 
     def params(self, function):
         if self.current_token.type == 'void':
+            type = self.current_token.type
+            function.add_param('void', 'void')
             self.accept('void')
-            self.params_prime()
+            self.params_prime(function)
         elif self.current_token.type == 'int':
+            type = 'int'
             self.accept('int')
             if self.current_token.type == 'ID':
-                self.accept('ID')
-                self.param_prime()
-                self.param_list_prime()
+                id = self.current_token.value
+                self.accept('ID') if function.add_param(type, id) else self.reject()
+                self.param_prime(function)
+                self.param_list_prime(function)
         else:
-            self.result = False
+            self.reject()
 
-    def params_prime(self):
+    def params_prime(self, function):
         if self.current_token.type == 'ID':
-            self.accept('ID')
-            self.param_prime()
-            self.param_list_prime()
+            self.reject()
+            self.param_prime(function)
+            self.param_list_prime(function)
 
-    def statement(self):
+    def statement(self, function):
         if self.current_token.type in self.expression_stmt_first:
-            self.expression_stmt()
+            self.expression_stmt(function)
         elif self.current_token.type in self.compound_stmt_first:
-            self.compound_stmt()
+            self.compound_stmt(function)
         elif self.current_token.type == 'if':
-            self.selection_stmt()
+            self.selection_stmt(function)
         elif self.current_token.type == 'while':
-            self.iteration_stmt()
+            self.iteration_stmt(function)
         elif self.current_token.type == 'return':
-            self.return_stmt()
+            self.return_stmt(function)
         else:
-            self.result = False
+            self.reject()
 
-    def selection_stmt(self):
+    def selection_stmt(self, function):
         if self.current_token.type == 'if':
             self.accept('if')
             if self.current_token.type == '(':
@@ -184,9 +192,9 @@ class Parser:
                     self.statement()
                     self.selection_stmt_prime()
                 else:
-                    self.result = False
+                    self.reject()
             else:
-                self.result = False
+                self.reject()
 
     def selection_stmt_prime(self):
         if self.current_token.type == 'else':
@@ -203,26 +211,26 @@ class Parser:
                     self.accept(')')
                     self.statement()
                 else:
-                    self.result = False
+                    self.reject()
             else:
-                self.result = False
+                self.reject()
 
-    def return_stmt(self):
+    def return_stmt(self, function):
         if self.current_token.type == 'return':
             self.accept('return')
-            self.return_stmt_prime()
+            self.return_stmt_prime(function)
 
-    def return_stmt_prime(self):
+    def return_stmt_prime(self, function):
         if self.current_token.type == ';':
             self.accept(';')
         elif self.current_token.type in self.expression_first:
-            self.expression()
+            self.expression(function)
             if self.current_token.type == ';':
                 self.accept(';')
             else:
-                self.result = False
+                self.reject()
         else:
-            self.result = False
+            self.reject()
 
     def expression_stmt(self):
         if self.current_token.type in self.expression_first:
@@ -230,33 +238,36 @@ class Parser:
             if self.current_token.type == ';':
                 self.accept(';')
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type == ';':
             self.accept(';')
         else:
-            self.result = False
+            self.reject()
 
     def expression(self):
+        exp = Expression()
         if self.current_token.type == '(':
             self.accept('(')
-            self.expression()
+            self.type = self.expression()
             if self.current_token.type == ')':
                 self.accept(')')
                 self.term_prime()
                 self.additive_expression_prime()
                 self.simple_expression()
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type == 'ID':
+            exp.assign_a(self.current_token.value)
             self.accept('ID')
-            self.expression_prime()
+            self.expression_prime(exp)
         elif self.current_token.type == 'NUM':
+            exp.operandA = self.current_token.value
             self.accept('NUM')
-            self.term_prime()
+            self.term_prime(exp)
             self.additive_expression_prime()
             self.simple_expression()
         else:
-            self.result = False
+            self.reject()
 
     def expression_prime(self):
         if self.current_token.type == '[':
@@ -266,7 +277,7 @@ class Parser:
                 self.accept(']')
                 self.expression_double_prime()
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type == '(':
             self.accept('(')
             self.args()
@@ -276,7 +287,7 @@ class Parser:
                 self.additive_expression_prime()
                 self.simple_expression()
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type in self.expression_double_prime_first:
             self.expression_double_prime()
 
@@ -299,7 +310,7 @@ class Parser:
         if self.current_token.type in r:
             self.accept(self.current_token.type)
         else:
-            self.result = False
+            self.reject()
 
     def additive_expression(self):
         self.term()
@@ -315,27 +326,31 @@ class Parser:
         self.factor()
         self.term_prime()
 
-    def term_prime(self):
+    def term_prime(self, exp):
         if self.current_token.type in ['*', '/']:
+            exp.op = self.current_token
             self.accept(self.current_token.type)
             self.factor()
             self.term_prime()
 
     def factor(self):
+        factor = Factor()
         if self.current_token.type == '(':
             self.accept(self.current_token)
-            self.expression()
+            eval_type = self.expression()
             if self.current_token.type == ')':
                 self.accept(self.current_token)
+                return eval_type
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type == 'ID':
             self.accept(self.current_token)
             self.factor_prime()
         elif self.current_token.type == 'NUM':
             self.accept(self.current_token)
+            return 'int'
         else:
-            self.result = False
+            self.reject()
 
     def factor_prime(self):
         if self.current_token.type == '[':
@@ -344,14 +359,14 @@ class Parser:
             if self.current_token.type == ']':
                 self.accept(self.current_token)
             else:
-                self.result = False
+                self.reject()
         elif self.current_token.type == '(':
             self.accept(self.current_token)
             self.args()
             if self.current_token.type == ')':
                 self.accept(self.current_token)
             else:
-                self.result = False
+                self.reject()
 
     def args(self):
         if self.current_token.type in self.expression_first:

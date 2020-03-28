@@ -74,6 +74,7 @@ class ProgramScope:
         table = self.SymbolTable()
         self.current_scope = table
         self.list.add_last(table)
+        return table
 
     def get_scope(self, id):
         node = self.list.last()
@@ -181,7 +182,7 @@ class DeclarationPrime(Declaration):
         return self.var_declaration
 
     def init_function(self):
-        self.func_declaration = FunDeclaration()
+        self.func_declaration = FunDeclaration(self.type, self.id)
         return self.func_declaration
 
 class FunDeclaration(DeclarationPrime):
@@ -190,18 +191,38 @@ class FunDeclaration(DeclarationPrime):
     params = {}
     scope = None
     return_type = None
-    return_value = None
-
-    class Params:
-        type = None
-        id = None
+    compound_stmt = None
 
     def __init__(self, type, id):
         self.type = type
         self.id = id
+        self.PS.add(self.id, self)
+
+    def verify(self):
+        if self.type == 'void':
+            if self.return_type is None:
+                return True
+            else:
+                return False
+
+    def add_param(self, id, type):
+        if id not in self.params.keys() and 'void' not in self.params.keys():
+            print(id)
+            self.params.update({id: type})
+            return True
+        else:
+            print(id)
+            print('should fail here')
+            return False
+
+    def declare_var(self, type, id):
+        self.var_declaration = VarDeclaration(type, id)
+        return self.var_declaration
+
+    def add_scope(self):
+        self.scope = self.PS.new_scope()
 
 class VarDeclaration(DeclarationPrime):
-    pass
     has_array = False
     array = None
     array_size = None
@@ -216,3 +237,27 @@ class VarDeclaration(DeclarationPrime):
             return False
         self.PS.add(self.id, self)
         return True
+
+class Expression(Program):
+    operandA = None
+    operandB = None
+    op = None
+    eval_type = None
+
+    def assign_a(self, id):
+        self.operandA = self.PS.get(id)
+
+    def assign_b(self, id):
+        self.operandB = self.PS.get(id)
+
+    def assign_op(self, op):
+        self.op = op
+
+    def evaluation_type(self):
+        if self.op == ''
+
+    def add_expression
+
+class Factor(Program):
+    type = None
+    id = None

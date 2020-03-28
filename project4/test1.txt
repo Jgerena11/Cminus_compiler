@@ -1,4 +1,1 @@
-int x;
-int y;
-int z;
-int t[3];
+void x (void x[]) {}
