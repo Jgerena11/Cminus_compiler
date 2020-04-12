@@ -1,1 +1,3 @@
-void x (void x[]) {}
+int sum(void) {
+    return x;
+}
